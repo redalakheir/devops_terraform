@@ -27,6 +27,8 @@ resource "scaleway_instance_ip" "public_ip" {
   count = 2
 }
 
+resource "scaleway_lb_ip" "ip" {
+}
 
 resource "scaleway_instance_server" "web" {
   count = 2
@@ -59,4 +61,23 @@ resource "scaleway_instance_server" "web" {
       #private_key = "file(/home/user/terra_ansible)"
       private_key = file("~/.ssh/id_rsa")
     }
+}
+
+resource "scaleway_lb" "base" {
+  ip_id  = scaleway_lb_ip.ip.id
+  type   = "LB-S"
+}
+
+resource "scaleway_lb_backend" "backend01" {
+  lb_id            = scaleway_lb.base.id
+  name             = "backend01"
+  forward_protocol = "http"
+  forward_port     = "80"
+}
+
+resource "scaleway_lb_frontend" "frontend01" {
+  lb_id        = scaleway_lb.base.ip_id
+  backend_id   = scaleway_lb_backend.backend01.id
+  name         = "frontend01"
+  inbound_port = "80"
 }
